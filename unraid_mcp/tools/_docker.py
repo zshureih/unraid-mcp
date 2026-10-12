@@ -1,11 +1,11 @@
 """Docker domain handler for the Unraid MCP tool.
 
-Covers: list, details, ports, start, stop, restart, unpause, networks,
+Covers: list, details, ports, organizer, start, stop, restart, unpause, networks,
 network_details, remove_container*, update_container, update_containers,
 update_all_containers, update_autostart, refresh_digests, sync_template_paths,
 reset_template_mappings*, create_folder, create_folder_with_items, rename_folder,
 set_folder_children, delete_entries*, move_entries_to_folder,
-move_items_to_position, update_view_preferences (25 subactions, plus a deprecated
+move_items_to_position, update_view_preferences (26 subactions, plus a deprecated
 `logs` stub that returns an informative ToolError — not counted).
 """
 
@@ -39,6 +39,7 @@ _DOCKER_QUERIES: dict[str, str] = {
     "ports": "query GetContainerPorts { docker { containers { id names state ports { ip privatePort publicPort type } } } }",
     "networks": "query GetDockerNetworks { docker { networks { id name driver scope } } }",
     "network_details": "query GetDockerNetwork { docker { networks { id name driver scope enableIPv6 internal attachable containers options labels } } }",
+    "organizer": "query GetDockerOrganizer { docker { organizer { version views { id name rootId flatEntries { id type name parentId depth position hasChildren childrenIds } } } } }",
 }
 
 # Internal query used only for container ID resolution — not a public subaction.
@@ -335,6 +336,11 @@ async def _handle_docker(
                 if net.get("id") == network_id or net.get("name") == network_id:
                     return dict(net)
             raise ToolError(f"Network '{network_id}' not found.")
+
+        if subaction == "organizer":
+            data = await _client.make_graphql_request(_DOCKER_QUERIES["organizer"])
+            organizer = safe_get(data, "docker", "organizer", default={})
+            return {"organizer": organizer}
 
         if subaction == "logs":
             raise ToolError(

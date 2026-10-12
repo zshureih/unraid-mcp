@@ -2,6 +2,11 @@ services:
   unraid-mcp:
     build: .
     container_name: unraid-mcp
+    labels:
+      com.jakenet.project: unraid-mcp
+      com.jakenet.component: server
+      com.jakenet.managed-by: compose
+      com.jakenet.group: MCP Servers
     restart: unless-stopped
     # The credentials volume (unraid-mcp-credentials) is created chmod-700 owned by
     # uid 1000, so PUID must remain 1000 unless you re-chown the volume to match.
